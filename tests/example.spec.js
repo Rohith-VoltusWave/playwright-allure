@@ -6,4 +6,5 @@ test("opening the website", async function ({ page }) {
   await expect(page).toHaveTitle("Amura Health");
   await page.getByRole("textbox").fill("example value");
   await page.getByRole("button", { name: "Login" }).click();
+  await page.getByRole("button", { name: "jdgsf" }).click();
 });
