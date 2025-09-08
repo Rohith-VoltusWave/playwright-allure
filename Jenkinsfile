@@ -1,33 +1,61 @@
 pipeline {
-  agent any
+    agent any
 
-  tools {
-    nodejs "NodeJS"   // must match your NodeJS tool in Jenkins
-  }
-
-  stages {
-    stage('Install dependencies') {
-      steps {
-        sh 'npm ci'
-        sh 'npx playwright install --with-deps'
-      }
+    tools {
+        nodejs "NodeJS"
     }
 
-    stage('Run Playwright Tests') {
-      steps {
-        // Explicitly run .wtt files if needed
-        sh 'npx playwright test tests/**/*.wtt --reporter=line,allure-playwright'
-      }
+    triggers {
+        pollSCM('H/5 * * * *')  
     }
-  }
 
-  post {
-    always {
-      allure([
-        includeProperties: false,
-        jdk: '',
-        results: [[path: 'allure-results']]
-      ])
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/Rohith-VoltusWave/playwright-allure.git',
+                    credentialsId: 'Rohithjenkins'
+            }
+        }
+
+        stage('Install dependencies') {
+            steps {
+                sh 'npm ci'
+                sh 'npx playwright install'
+            }
+        }
+
+        stage('Run Playwright Tests') {
+            steps {
+                sh 'npx playwright test'
+            }
+        }
+
+        stage('Generate Allure Report') {
+            steps {
+                sh 'npx allure generate ./allure-results --clean -o ./allure-report'
+            }
+        }
+
+        stage('Publish Allure Report') {
+            steps {
+                allure([
+                    reportBuildPolicy: 'ALWAYS',
+                    results: [[path: "allure-results"]]
+                ])
+            }
+        }
     }
-  }
+
+    post {
+        always {
+            archiveArtifacts artifacts: '**/allure-report/**', allowEmptyArchive: true
+        }
+        failure {
+            echo '❌ Build failed because some tests did not pass!'
+        }
+        success {
+            echo '✅ All tests passed!'
+        }
+    }
 }
