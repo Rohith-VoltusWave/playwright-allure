@@ -2,12 +2,9 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests",
-  reporter: [
-    ["list"], 
-    ["allure-playwright"], 
-  ],
+  reporter: [["list"], ["allure-playwright"]],
   use: {
-    headless: false,
+    headless: true,
     args: ["--start-maximised"],
     viewport: null,
     browserName: "chromium",
